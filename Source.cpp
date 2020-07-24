@@ -1,41 +1,60 @@
 #include <iostream>
-#include <cstdlib>
+#include <string>
 #include <fstream>
-#include <windows.h>
+#include <thread>
+#include <chrono>
+#include <limits>
+//#include "Password.h"
 
-using namespace std;
+template<class T,class V> 
+T CinCheck(T minimum, T maximum, V message[], V wrong_message[]) {
+    T number;
+    while ((std::cout << message )<< "\n"&& (!(std::cin >> number) || number > maximum || number < minimum )){
+        std::cout << wrong_message<<"\n";
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return number;
+}
 
-class BalanceFile :public fstream
+class BalanceFile
 {
+    double balance{ NULL };
 public:
     double readbalance() {
-        ifstream blnce;
-        blnce.open("balance.txt", ios::in);
+        std::ifstream blnce;
+        blnce.open("balance.txt", std::ios::in);
         blnce >> balance;
+        blnce.close();
         return balance;
     }
 
     void writeBalance(double newbalance) {
-        ofstream write;
-        write.open("balance.txt", ios::out);
-        write << newbalance << endl;
+        std::ofstream write;
+        write.open("balance.txt", std::ios::out);
+        write << newbalance << std::endl;
         write.close();
     }
 
-    double balance;
+    
 };
 
 class bankaccount :private BalanceFile
 {
-private:
 
+private:
+    
     BalanceFile bln;
-    double balance = bln.readbalance();;
+    double balance = NULL;
 
 
 
 public:
-
+    bankaccount()
+        :balance(bln.readbalance())
+    {
+    }
     double withdraw(double transmoney) {
         if (balance >= transmoney) {
             balance = balance - transmoney;
@@ -44,7 +63,7 @@ public:
         }
 
         else {
-            cout << "You have insufficient balance to do the transaction" << endl;
+            std::cout << "You have insufficient balance to do the transaction" << std::endl;
 
             return balance;
         }
@@ -64,39 +83,47 @@ public:
 
 int main()
 {
-    string transaction;
+    constexpr char message[]{ "Press 1 for withdrawal\nPress 2 for money deposit\nPress 3 for Balance Inquiry" };
+    constexpr char wrong_message[]{ "You typed the wrong number perhaps?\n" };
+    constexpr char depmsg[]{ "How much would you like to deposit to your account?\n" };
+    constexpr char withmsg[]{ "How much would you like to withdraw to your account?\n" };
+    constexpr char invalnum[]{ "That's not a valid number\n" };
+    constexpr double maxnum{ 1.8e307 };
+    
+    std::string transaction;
     bankaccount* myacc = new bankaccount;
 
     while (true) {
-        cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
-        cout << "Press 1 for withdrawal" << endl << "Press 2 for money deposit" << endl << "Press 3 for Balance Inquiry" << endl;
-
-        string transaction;
+        std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+        
+        int transaction{ CinCheck<int>(1,3,message,wrong_message) };
         double newbalance;
-        cin >> transaction;
-        if (transaction == "1") {
-            cout << "How much would you like to withdraw to your account?" << endl;
-            int with;
-            cin >> with;
+        if (transaction == 1) {
+            double with{CinCheck<double>(0,maxnum,withmsg,invalnum)};
             newbalance = myacc->withdraw(with);
-            cout << "Your new balance is "<< newbalance << "$" << endl;
+            std::cout << "Your new balance is "<< newbalance << "$" << std::endl;
         }
-        else if (transaction == "2") {
-            cout << "How much would you like to deposit to your account?" << endl;
-            int dep;
-            cin >> dep;
+        else if (transaction == 2) {
+            
+            
+            double dep{ CinCheck<double>(0,maxnum,depmsg,invalnum) };
             newbalance = myacc->deposit(dep);
-            cout << "Your new balance is "<< newbalance << "$" << endl;
+            std::cout << "Your new balance is "<< newbalance << "$" << std::endl;
         }
-        else if (transaction == "3") {
+        else if (transaction == 3) {
             newbalance = myacc->balanceinquiry();
-            cout << "Your current account balance is "<< newbalance<< "$" << endl;
+            std::cout << "Your current account balance is "<< newbalance<< "$" << std::endl;
         }
         else {
-            cout << "You typed the wrong number perhaps?" << endl;
+            std::cout << "You typed the wrong number perhaps?" << std::endl;
         }
 
-        Sleep(2000);
+       std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
     return 0;
 }
+
+
+
+
+

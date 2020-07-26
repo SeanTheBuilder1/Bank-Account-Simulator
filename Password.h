@@ -3,8 +3,17 @@
 
 class Password
 {
+private:
+
+
+	
+public:
 	Password();
-	std::string stringFind();
+	int getlinenum(char operation);
+	bool stringFind(std::string user);
+	bool Passfind(std::string password);
+	void writeBalance(double newbalance);
+	double readBalance();
 };
 
 #endif 

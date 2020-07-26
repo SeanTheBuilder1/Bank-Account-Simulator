@@ -4,7 +4,7 @@
 #include <thread>
 #include <chrono>
 #include <limits>
-//#include "Password.h"
+#include "Password.h"
 
 template<class T,class V> 
 T CinCheck(T minimum, T maximum, V message[], V wrong_message[]) {
@@ -18,7 +18,30 @@ T CinCheck(T minimum, T maximum, V message[], V wrong_message[]) {
     return number;
 }
 
-class BalanceFile
+
+std::string NameHandling(const char msg[]) {
+    std::string Name{ NULL };
+    bool LoopEnder{ true };
+    while (LoopEnder) {
+        getline(std::cin, Name);
+        if (Name.length() < 3) {
+            std::cin.clear();
+            std::cout << "msg\n";
+        }
+        else {
+            if (std::cin.fail()) {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+            else {
+                LoopEnder = false;
+            }
+        }
+    }
+    return Name;
+}
+
+/*class BalanceFile
 {
     double balance{ NULL };
 public:
@@ -38,27 +61,28 @@ public:
     }
 
     
-};
+};*/
 
-class bankaccount :private BalanceFile
+class bankaccount :private Password
 {
 
 private:
     
-    BalanceFile bln;
+    Password Auth;
     double balance = NULL;
 
 
 
 public:
     bankaccount()
-        :balance(bln.readbalance())
+        :balance(Auth.readBalance())
     {
     }
     double withdraw(double transmoney) {
         if (balance >= transmoney) {
             balance = balance - transmoney;
-            writeBalance(balance);
+            Auth.writeBalance(balance);
+            balance = Auth.readBalance();
             return balance;
         }
 
@@ -69,12 +93,12 @@ public:
         }
     };
     double deposit(double transmoney) {
-        balance = balance + transmoney;
-        writeBalance(balance);
+        balance = Auth.readBalance() + transmoney;
+        Auth.writeBalance(balance);
         return balance;
     };
     double balanceinquiry() {
-        return balance;
+        return Auth.readBalance();
     };
 
 };
@@ -83,43 +107,91 @@ public:
 
 int main()
 {
+    //std::string a{ NameHandling() };
+    constexpr char clearscreen[]{ "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" };
     constexpr char message[]{ "Press 1 for withdrawal\nPress 2 for money deposit\nPress 3 for Balance Inquiry" };
     constexpr char wrong_message[]{ "You typed the wrong number perhaps?\n" };
     constexpr char depmsg[]{ "How much would you like to deposit to your account?\n" };
     constexpr char withmsg[]{ "How much would you like to withdraw to your account?\n" };
     constexpr char invalnum[]{ "That's not a valid number\n" };
+    constexpr char loginmsg[]{ "Press 1 for account transaction\nPress 2 for new account" };
+    constexpr char askname[]{ "Enter your username\n" };
+    constexpr char incompletemsg[]{"That functionality is inavailable as of now\n"};
+    constexpr char wrongnamemsg[]{ "That username is incorrect or not available\n" };
+    constexpr char rightnamemsg[]{ "Type your password\n" };
+    constexpr char wrongpassmsg[]{ "That password is incorrect\n" };
+    constexpr char rightpassmsg[]{ "Success! Logging In...\n" };
+    constexpr char invalnamemsg[]{ "Invalid Name!\n" };
+    constexpr char invalpassmsg[]{ "Invalid Password!\n" };
+
     constexpr double maxnum{ 1.8e307 };
-    
-    std::string transaction;
-    bankaccount* myacc = new bankaccount;
-
+    bool LoggedIn{ false };
     while (true) {
-        std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+        std::cout << clearscreen;
         
-        int transaction{ CinCheck<int>(1,3,message,wrong_message) };
-        double newbalance;
-        if (transaction == 1) {
-            double with{CinCheck<double>(0,maxnum,withmsg,invalnum)};
-            newbalance = myacc->withdraw(with);
-            std::cout << "Your new balance is "<< newbalance << "$" << std::endl;
+        int Logging{ CinCheck<int>(1,2,loginmsg,invalnum) };
+        if (Logging == 1) {
+            Password* Auth = new Password;
+            std::cout << askname;
+            std::string username{ NameHandling(invalnamemsg) };
+            bool isNameTrue = Auth->stringFind(username);
+            if (isNameTrue == true) {
+                std::cout << rightnamemsg;
+                bool isPassTrue{ false };
+                while (!isPassTrue) {
+                    std::string password{ NameHandling(invalpassmsg) };
+                    isPassTrue = Auth->Passfind(password);
+                    if (isPassTrue == false) {
+                        std::cout << wrongpassmsg;
+                    }
+                    else {
+                        std::cout << rightpassmsg;
+                        LoggedIn = true;
+                    }
+                }
+            }
+            else {
+                std::cout << wrongnamemsg;
+                
+            }
         }
-        else if (transaction == 2) {
+        else if (Logging == 2) {
+            std::cout << incompletemsg;
             
-            
-            double dep{ CinCheck<double>(0,maxnum,depmsg,invalnum) };
-            newbalance = myacc->deposit(dep);
-            std::cout << "Your new balance is "<< newbalance << "$" << std::endl;
         }
-        else if (transaction == 3) {
-            newbalance = myacc->balanceinquiry();
-            std::cout << "Your current account balance is "<< newbalance<< "$" << std::endl;
-        }
-        else {
-            std::cout << "You typed the wrong number perhaps?" << std::endl;
-        }
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        while (LoggedIn) {
+            bankaccount* myacc = new bankaccount;
+            std::cout << clearscreen;
+            int transaction{ CinCheck<int>(1,3,message,wrong_message) };
+            double newbalance;
+            if (transaction == 1) {
+                double with{ CinCheck<double>(0,maxnum,withmsg,invalnum) };
+                newbalance = myacc->withdraw(with);
+                std::cout << "Your new balance is " << newbalance << "$" << std::endl;
+            }
+            else if (transaction == 2) {
 
-       std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+                double dep{ CinCheck<double>(0,maxnum,depmsg,invalnum) };
+                newbalance = myacc->deposit(dep);
+                std::cout << "Your new balance is " << newbalance << "$" << std::endl;
+            }
+            else if (transaction == 3) {
+                newbalance = myacc->balanceinquiry();
+                std::cout << "Your current account balance is " << newbalance << "$" << std::endl;
+            }
+            else {
+                std::cout << "You typed the wrong number perhaps?" << std::endl;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+            delete myacc;
+        }
     }
+
+    
     return 0;
 }
 

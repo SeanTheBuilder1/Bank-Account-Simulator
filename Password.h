@@ -1,12 +1,7 @@
 #ifndef PASSWORD_H
 #define PASSWORD_H
 
-class Password
-{
-private:
-
-
-	
+class Password{
 public:
 	Password();
 	int getlinenum(char operation);
